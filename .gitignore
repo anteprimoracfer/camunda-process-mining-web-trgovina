@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Novi logovi iz vlastitih simulacija (log iz rada nalazi se u mapi podaci/)
+/log_web_trgovina.csv
+/skripte/log_web_trgovina.csv
+
+# Operacijski sustav i uredski programi
+.DS_Store
+Thumbs.db
+~$*

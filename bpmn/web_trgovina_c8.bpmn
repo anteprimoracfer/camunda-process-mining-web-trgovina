@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_WebTrgovina" targetNamespace="http://example.com/web-trgovina" exporter="Camunda Modeler" exporterVersion="5.52.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.10.0">
+  <bpmn:process id="ObradaNarudzbe" name="Obrada narudžbe u web-trgovini" isExecutable="true">
+    <bpmn:startEvent id="Start_Narudzba" name="Kupac poslao narudžbu">
+      <bpmn:outgoing>Flow_01</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Task_ZaprimiNarudzbu" name="Zaprimi narudžbu">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_01</bpmn:incoming>
+      <bpmn:outgoing>Flow_02</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_ProvjeriZalihe" name="Provjeri zalihe">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_02</bpmn:incoming>
+      <bpmn:outgoing>Flow_03</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_NaZalihi" name="Roba na zalihi?">
+      <bpmn:incoming>Flow_03</bpmn:incoming>
+      <bpmn:outgoing>Flow_ZaliheDa</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ZaliheNe</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_NaruciOdDobavljaca" name="Naruči robu od dobavljača">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ZaliheNe</bpmn:incoming>
+      <bpmn:outgoing>Flow_04</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_Dobavljac" name="Dobavljač može isporučiti?">
+      <bpmn:incoming>Flow_04</bpmn:incoming>
+      <bpmn:outgoing>Flow_DobavljacDa</bpmn:outgoing>
+      <bpmn:outgoing>Flow_DobavljacNe</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_OtkaziNarudzbu" name="Otkaži narudžbu">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_DobavljacNe</bpmn:incoming>
+      <bpmn:outgoing>Flow_05</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Otkazano" name="Narudžba otkazana">
+      <bpmn:incoming>Flow_05</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Task_ZaprimiRobu" name="Zaprimi robu od dobavljača">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_DobavljacDa</bpmn:incoming>
+      <bpmn:outgoing>Flow_06</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_SpojiZalihe">
+      <bpmn:incoming>Flow_ZaliheDa</bpmn:incoming>
+      <bpmn:incoming>Flow_06</bpmn:incoming>
+      <bpmn:outgoing>Flow_07</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:parallelGateway id="AND_Razdvoji">
+      <bpmn:incoming>Flow_07</bpmn:incoming>
+      <bpmn:outgoing>Flow_ParNaplata</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ParPakiranje</bpmn:outgoing>
+      <bpmn:outgoing>Flow_ParRacun</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:exclusiveGateway id="GW_PetljaNaplate">
+      <bpmn:incoming>Flow_ParNaplata</bpmn:incoming>
+      <bpmn:incoming>Flow_PonoviNaplatu</bpmn:incoming>
+      <bpmn:outgoing>Flow_08</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Naplati" name="Naplati narudžbu">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_08</bpmn:incoming>
+      <bpmn:outgoing>Flow_09</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_Placanje" name="Plaćanje uspješno?">
+      <bpmn:incoming>Flow_09</bpmn:incoming>
+      <bpmn:outgoing>Flow_PlacanjeDa</bpmn:outgoing>
+      <bpmn:outgoing>Flow_PlacanjeNe</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_ObavijestiNeuspjeh" name="Obavijesti kupca o neuspjelom plaćanju">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_PlacanjeNe</bpmn:incoming>
+      <bpmn:outgoing>Flow_PonoviNaplatu</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Zapakiraj" name="Zapakiraj robu">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ParPakiranje</bpmn:incoming>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_IzdajRacun" name="Izdaj račun">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_ParRacun</bpmn:incoming>
+      <bpmn:outgoing>Flow_11</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:parallelGateway id="AND_Spoji">
+      <bpmn:incoming>Flow_PlacanjeDa</bpmn:incoming>
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+      <bpmn:incoming>Flow_11</bpmn:incoming>
+      <bpmn:outgoing>Flow_12</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:exclusiveGateway id="GW_NacinDostave" name="Način dostave?">
+      <bpmn:incoming>Flow_12</bpmn:incoming>
+      <bpmn:outgoing>Flow_Kurir</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Osobno</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_PosaljiKurirom" name="Pošalji kurirskom službom">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Kurir</bpmn:incoming>
+      <bpmn:outgoing>Flow_13</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_PripremiPreuzimanje" name="Pripremi za osobno preuzimanje">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_Osobno</bpmn:incoming>
+      <bpmn:outgoing>Flow_14</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="GW_SpojiDostavu">
+      <bpmn:incoming>Flow_13</bpmn:incoming>
+      <bpmn:incoming>Flow_14</bpmn:incoming>
+      <bpmn:outgoing>Flow_15</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_ZatvoriNarudzbu" name="Zatvori narudžbu">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="web-trgovina" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_15</bpmn:incoming>
+      <bpmn:outgoing>Flow_16</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="End_Zavrseno" name="Narudžba završena">
+      <bpmn:incoming>Flow_16</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_01" sourceRef="Start_Narudzba" targetRef="Task_ZaprimiNarudzbu" />
+    <bpmn:sequenceFlow id="Flow_02" sourceRef="Task_ZaprimiNarudzbu" targetRef="Task_ProvjeriZalihe" />
+    <bpmn:sequenceFlow id="Flow_03" sourceRef="Task_ProvjeriZalihe" targetRef="GW_NaZalihi" />
+    <bpmn:sequenceFlow id="Flow_ZaliheDa" name="da" sourceRef="GW_NaZalihi" targetRef="GW_SpojiZalihe">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=naZalihi = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_ZaliheNe" name="ne" sourceRef="GW_NaZalihi" targetRef="Task_NaruciOdDobavljaca">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=naZalihi = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_04" sourceRef="Task_NaruciOdDobavljaca" targetRef="GW_Dobavljac" />
+    <bpmn:sequenceFlow id="Flow_DobavljacDa" name="da" sourceRef="GW_Dobavljac" targetRef="Task_ZaprimiRobu">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=dobavljacDostupan = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_DobavljacNe" name="ne" sourceRef="GW_Dobavljac" targetRef="Task_OtkaziNarudzbu">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=dobavljacDostupan = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_05" sourceRef="Task_OtkaziNarudzbu" targetRef="End_Otkazano" />
+    <bpmn:sequenceFlow id="Flow_06" sourceRef="Task_ZaprimiRobu" targetRef="GW_SpojiZalihe" />
+    <bpmn:sequenceFlow id="Flow_07" sourceRef="GW_SpojiZalihe" targetRef="AND_Razdvoji" />
+    <bpmn:sequenceFlow id="Flow_ParNaplata" sourceRef="AND_Razdvoji" targetRef="GW_PetljaNaplate" />
+    <bpmn:sequenceFlow id="Flow_ParPakiranje" sourceRef="AND_Razdvoji" targetRef="Task_Zapakiraj" />
+    <bpmn:sequenceFlow id="Flow_ParRacun" sourceRef="AND_Razdvoji" targetRef="Task_IzdajRacun" />
+    <bpmn:sequenceFlow id="Flow_08" sourceRef="GW_PetljaNaplate" targetRef="Task_Naplati" />
+    <bpmn:sequenceFlow id="Flow_09" sourceRef="Task_Naplati" targetRef="GW_Placanje" />
+    <bpmn:sequenceFlow id="Flow_PlacanjeDa" name="da" sourceRef="GW_Placanje" targetRef="AND_Spoji">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=placanjeUspjesno = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_PlacanjeNe" name="ne" sourceRef="GW_Placanje" targetRef="Task_ObavijestiNeuspjeh">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=placanjeUspjesno = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_PonoviNaplatu" sourceRef="Task_ObavijestiNeuspjeh" targetRef="GW_PetljaNaplate" />
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Task_Zapakiraj" targetRef="AND_Spoji" />
+    <bpmn:sequenceFlow id="Flow_11" sourceRef="Task_IzdajRacun" targetRef="AND_Spoji" />
+    <bpmn:sequenceFlow id="Flow_12" sourceRef="AND_Spoji" targetRef="GW_NacinDostave" />
+    <bpmn:sequenceFlow id="Flow_Kurir" name="kurir" sourceRef="GW_NacinDostave" targetRef="Task_PosaljiKurirom">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=nacinDostave = "kurir"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_Osobno" name="osobno" sourceRef="GW_NacinDostave" targetRef="Task_PripremiPreuzimanje">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=nacinDostave = "osobno"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_13" sourceRef="Task_PosaljiKurirom" targetRef="GW_SpojiDostavu" />
+    <bpmn:sequenceFlow id="Flow_14" sourceRef="Task_PripremiPreuzimanje" targetRef="GW_SpojiDostavu" />
+    <bpmn:sequenceFlow id="Flow_15" sourceRef="GW_SpojiDostavu" targetRef="Task_ZatvoriNarudzbu" />
+    <bpmn:sequenceFlow id="Flow_16" sourceRef="Task_ZatvoriNarudzbu" targetRef="End_Zavrseno" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_1">
+    <bpmndi:BPMNPlane id="Plane_1" bpmnElement="ObradaNarudzbe">
+      <bpmndi:BPMNShape id="Start_Narudzba_di" bpmnElement="Start_Narudzba">
+        <dc:Bounds x="152" y="362" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="137" y="398" width="67" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ZaprimiNarudzbu_di" bpmnElement="Task_ZaprimiNarudzbu">
+        <dc:Bounds x="230" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ProvjeriZalihe_di" bpmnElement="Task_ProvjeriZalihe">
+        <dc:Bounds x="380" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_NaZalihi_di" bpmnElement="GW_NaZalihi" isMarkerVisible="true">
+        <dc:Bounds x="535" y="355" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="522" y="405" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_NaruciOdDobavljaca_di" bpmnElement="Task_NaruciOdDobavljaca">
+        <dc:Bounds x="630" y="480" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Dobavljac_di" bpmnElement="GW_Dobavljac" isMarkerVisible="true">
+        <dc:Bounds x="785" y="495" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="771" y="545" width="79" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_OtkaziNarudzbu_di" bpmnElement="Task_OtkaziNarudzbu">
+        <dc:Bounds x="760" y="610" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Otkazano_di" bpmnElement="End_Otkazano">
+        <dc:Bounds x="932" y="632" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="926" y="668" width="48" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ZaprimiRobu_di" bpmnElement="Task_ZaprimiRobu">
+        <dc:Bounds x="880" y="480" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_SpojiZalihe_di" bpmnElement="GW_SpojiZalihe" isMarkerVisible="true">
+        <dc:Bounds x="1035" y="355" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AND_Razdvoji_di" bpmnElement="AND_Razdvoji">
+        <dc:Bounds x="1135" y="355" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_PetljaNaplate_di" bpmnElement="GW_PetljaNaplate" isMarkerVisible="true">
+        <dc:Bounds x="1235" y="205" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Naplati_di" bpmnElement="Task_Naplati">
+        <dc:Bounds x="1320" y="190" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_Placanje_di" bpmnElement="GW_Placanje" isMarkerVisible="true">
+        <dc:Bounds x="1475" y="205" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1475" y="255" width="51" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ObavijestiNeuspjeh_di" bpmnElement="Task_ObavijestiNeuspjeh">
+        <dc:Bounds x="1320" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Zapakiraj_di" bpmnElement="Task_Zapakiraj">
+        <dc:Bounds x="1320" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_IzdajRacun_di" bpmnElement="Task_IzdajRacun">
+        <dc:Bounds x="1320" y="490" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="AND_Spoji_di" bpmnElement="AND_Spoji">
+        <dc:Bounds x="1585" y="355" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_NacinDostave_di" bpmnElement="GW_NacinDostave" isMarkerVisible="true">
+        <dc:Bounds x="1685" y="355" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1672" y="405" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PosaljiKurirom_di" bpmnElement="Task_PosaljiKurirom">
+        <dc:Bounds x="1780" y="260" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PripremiPreuzimanje_di" bpmnElement="Task_PripremiPreuzimanje">
+        <dc:Bounds x="1780" y="420" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="GW_SpojiDostavu_di" bpmnElement="GW_SpojiDostavu" isMarkerVisible="true">
+        <dc:Bounds x="1935" y="355" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ZatvoriNarudzbu_di" bpmnElement="Task_ZatvoriNarudzbu">
+        <dc:Bounds x="2035" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_Zavrseno_di" bpmnElement="End_Zavrseno">
+        <dc:Bounds x="2187" y="362" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2181" y="398" width="48" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_01_di" bpmnElement="Flow_01">
+        <di:waypoint x="188" y="380" />
+        <di:waypoint x="230" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02_di" bpmnElement="Flow_02">
+        <di:waypoint x="330" y="380" />
+        <di:waypoint x="380" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03_di" bpmnElement="Flow_03">
+        <di:waypoint x="480" y="380" />
+        <di:waypoint x="535" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ZaliheDa_di" bpmnElement="Flow_ZaliheDa">
+        <di:waypoint x="585" y="380" />
+        <di:waypoint x="1035" y="380" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="804" y="355" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ZaliheNe_di" bpmnElement="Flow_ZaliheNe">
+        <di:waypoint x="560" y="405" />
+        <di:waypoint x="560" y="520" />
+        <di:waypoint x="630" y="520" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="569" y="453" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04_di" bpmnElement="Flow_04">
+        <di:waypoint x="730" y="520" />
+        <di:waypoint x="785" y="520" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DobavljacDa_di" bpmnElement="Flow_DobavljacDa">
+        <di:waypoint x="835" y="520" />
+        <di:waypoint x="880" y="520" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="851" y="495" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DobavljacNe_di" bpmnElement="Flow_DobavljacNe">
+        <di:waypoint x="810" y="545" />
+        <di:waypoint x="810" y="610" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="819" y="568" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05_di" bpmnElement="Flow_05">
+        <di:waypoint x="860" y="650" />
+        <di:waypoint x="932" y="650" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06_di" bpmnElement="Flow_06">
+        <di:waypoint x="980" y="520" />
+        <di:waypoint x="1060" y="520" />
+        <di:waypoint x="1060" y="405" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07_di" bpmnElement="Flow_07">
+        <di:waypoint x="1085" y="380" />
+        <di:waypoint x="1135" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ParNaplata_di" bpmnElement="Flow_ParNaplata">
+        <di:waypoint x="1160" y="355" />
+        <di:waypoint x="1160" y="230" />
+        <di:waypoint x="1235" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ParPakiranje_di" bpmnElement="Flow_ParPakiranje">
+        <di:waypoint x="1185" y="380" />
+        <di:waypoint x="1320" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_ParRacun_di" bpmnElement="Flow_ParRacun">
+        <di:waypoint x="1160" y="405" />
+        <di:waypoint x="1160" y="530" />
+        <di:waypoint x="1320" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08_di" bpmnElement="Flow_08">
+        <di:waypoint x="1285" y="230" />
+        <di:waypoint x="1320" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_09_di" bpmnElement="Flow_09">
+        <di:waypoint x="1420" y="230" />
+        <di:waypoint x="1475" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PlacanjeDa_di" bpmnElement="Flow_PlacanjeDa">
+        <di:waypoint x="1525" y="230" />
+        <di:waypoint x="1610" y="230" />
+        <di:waypoint x="1610" y="355" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1561" y="205" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PlacanjeNe_di" bpmnElement="Flow_PlacanjeNe">
+        <di:waypoint x="1500" y="205" />
+        <di:waypoint x="1500" y="120" />
+        <di:waypoint x="1420" y="120" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1509" y="153" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_PonoviNaplatu_di" bpmnElement="Flow_PonoviNaplatu">
+        <di:waypoint x="1320" y="120" />
+        <di:waypoint x="1260" y="120" />
+        <di:waypoint x="1260" y="205" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10">
+        <di:waypoint x="1420" y="380" />
+        <di:waypoint x="1585" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11_di" bpmnElement="Flow_11">
+        <di:waypoint x="1420" y="530" />
+        <di:waypoint x="1610" y="530" />
+        <di:waypoint x="1610" y="405" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12_di" bpmnElement="Flow_12">
+        <di:waypoint x="1635" y="380" />
+        <di:waypoint x="1685" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Kurir_di" bpmnElement="Flow_Kurir">
+        <di:waypoint x="1710" y="355" />
+        <di:waypoint x="1710" y="300" />
+        <di:waypoint x="1780" y="300" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1715" y="283" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_Osobno_di" bpmnElement="Flow_Osobno">
+        <di:waypoint x="1710" y="405" />
+        <di:waypoint x="1710" y="460" />
+        <di:waypoint x="1780" y="460" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1707" y="463" width="37" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_13_di" bpmnElement="Flow_13">
+        <di:waypoint x="1880" y="300" />
+        <di:waypoint x="1960" y="300" />
+        <di:waypoint x="1960" y="355" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14_di" bpmnElement="Flow_14">
+        <di:waypoint x="1880" y="460" />
+        <di:waypoint x="1960" y="460" />
+        <di:waypoint x="1960" y="405" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15_di" bpmnElement="Flow_15">
+        <di:waypoint x="1985" y="380" />
+        <di:waypoint x="2035" y="380" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16_di" bpmnElement="Flow_16">
+        <di:waypoint x="2135" y="380" />
+        <di:waypoint x="2187" y="380" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
